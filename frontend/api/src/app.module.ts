@@ -1,0 +1,32 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+
+@Module({
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+        }),
+        MongooseModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: async (configService: ConfigService) => {
+                const uri = configService.get<string>('MONGODB_URI');
+                if (!uri) {
+                    console.error('[AppModule] MONGODB_URI is not defined in environment variables!');
+                }
+                return {
+                    uri: uri || 'mongodb://localhost:27017/unused',
+                    serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+                };
+            },
+            inject: [ConfigService],
+        }),
+        AuthModule,
+        UsersModule,
+    ],
+    controllers: [],
+    providers: [],
+})
+export class AppModule { }
